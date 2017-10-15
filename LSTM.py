@@ -5,9 +5,9 @@ import tensorflow as tf
 
 # This class gets data for a single user
 class LSTM(object):
-    def __init__(self,layers, seed=-1):
-        self._input_size = -1
-        self._hidden_layer_size = -1
+    def __init__(self, layers, hidden_layer_size, input_size, seed=-1 ):
+        self._input_size = input_size
+        self._hidden_layer_size = hidden_layer_size
         self.layers = layers
         self.seed = seed
         self._init_tensors()
@@ -40,8 +40,6 @@ class LSTM(object):
 
     def apply(self, input_data, state):
         _conc = LSTM._conc_input(input_data, state)
-        self._input_size = input_data.get_shape().as_list()[0]
-        self._hidden_layer_size = state.get_shape().as_list()[0]
         return self._block(_conc)
 
     def _block(self, input_data):
