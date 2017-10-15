@@ -22,9 +22,11 @@ class LSTM(object):
         self.tf_bc = []
         self.tf_bo = []
         _size = self._hidden_layer_size + self._input_size
-        self._init_tensor_block(self.layers, _size)
+        for i in range(self.layers):
+            self._init_tensor_block(_size)
+            _size = 2*self._hidden_layer_size
 
-    def _init_tensor_block(self, layer, input_size):
+    def _init_tensor_block(self, input_size):
         if self.seed != -1:
             self.tf_wt.append(tf.Variable(
                 tf.random_normal([self._hidden_layer_size, input_size], stddev=0.35, seed=self.seed)))
@@ -49,16 +51,19 @@ class LSTM(object):
         self.tf_bo.append(tf.Variable(tf.zeros([self._hidden_layer_size, 1])))
 
     def apply(self, input_data, state):
-        state, output = self._block(input_data, state)
+        output = []
+        for i in range(self.layers):
+            state, output = self._block(input_data, state, i)
+            input_data = output
         return state, output
 
-    def _block(self, input_data, state):
+    def _block(self, input_data, state, layer):
         state_input_date_conc = tf.concat([input_data, state], 0)
-        tf_ft =  tf.nn.sigmoid(tf.matmul(self.tf_wt[0], state_input_date_conc) + self.tf_bt[0])
-        tf_it = tf.nn.sigmoid(tf.matmul(self.tf_wi[0], state_input_date_conc) + self.tf_bi[0])
-        tf_chat_t = tf.nn.tanh(tf.matmul(self.tf_wc[0], state_input_date_conc) + self.tf_bc[0])
+        tf_ft =  tf.nn.sigmoid(tf.matmul(self.tf_wt[layer], state_input_date_conc) + self.tf_bt[layer])
+        tf_it = tf.nn.sigmoid(tf.matmul(self.tf_wi[layer], state_input_date_conc) + self.tf_bi[layer])
+        tf_chat_t = tf.nn.tanh(tf.matmul(self.tf_wc[layer], state_input_date_conc) + self.tf_bc[layer])
         state = tf.multiply(tf_ft,state) + tf.multiply(tf_it,tf_chat_t)
-        tf_ot = tf.nn.sigmoid(tf.matmul(self.tf_wo[0], state_input_date_conc) + self.tf_bo[0])
+        tf_ot = tf.nn.sigmoid(tf.matmul(self.tf_wo[layer], state_input_date_conc) + self.tf_bo[layer])
         output = tf.multiply(tf_ot, tf.nn.tanh(state))
         return state, output
 
